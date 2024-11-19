@@ -16,7 +16,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const protectedRoutes = require('./routes/protectedRoutes');
+
 app.use('/api/auth', authRoutes);
+app.use('/api/protected', protectedRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
