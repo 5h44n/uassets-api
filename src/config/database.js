@@ -1,16 +1,22 @@
-const mongoose = require('mongoose');
+require('dotenv').config();
+const { Sequelize } = require('sequelize');
+const path = require('path');
+
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: path.join(__dirname, '../../database.sqlite'),
+    logging: false
+});
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
+        await sequelize.authenticate();
+        await sequelize.sync();
+        console.log('SQLite Database Connected');
     } catch (error) {
         console.error(`Error: ${error.message}`);
         process.exit(1);
     }
 };
 
-module.exports = connectDB;
+module.exports = { connectDB, sequelize };
