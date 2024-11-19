@@ -4,15 +4,6 @@ const path = require('path');
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: path.join(__dirname, '../../database.sqlite'),
-    logging: false
-});
-
-const { Sequelize } = require('sequelize');
-const path = require('path');
-
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
     storage: path.join(__dirname, '../../data/database.sqlite'),
     logging: false
 });
@@ -26,9 +17,6 @@ const connectDB = async () => {
         console.error(`Error: ${error.message}`);
         process.exit(1);
     }
-};
-
-module.exports = connectDB;
 };
 
 module.exports = { connectDB, sequelize };
