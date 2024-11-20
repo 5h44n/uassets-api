@@ -22,6 +22,11 @@ describe('Quote Controller', () => {
     user = await User.create({ walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635' });
   });
 
+  afterEach(async () => {
+    await Quote.destroy({ where: {} });
+    await User.destroy({ where: {} });
+  });
+
   describe('POST /api/quote', () => {
     it('should return 400 if required fields are missing', async () => {
       const response = await request(app)
@@ -202,11 +207,6 @@ describe('Quote Controller', () => {
       expect(response.statusCode).toBe(403);
       expect(response.body).toEqual({ message: 'Invalid or expired token' });
     });
-  });
-
-  afterEach(async () => {
-    await Quote.destroy({ where: {} });
-    await User.destroy({ where: {} });
   });
 
   describe('POST /api/quote', () => {
