@@ -14,10 +14,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
-const protectedRoutes = require('./routes/protectedRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api', protectedRoutes);
+app.use('/api', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

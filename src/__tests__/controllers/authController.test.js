@@ -1,5 +1,5 @@
+require('dotenv').config();
 const request = require('supertest');
-require('dotenv').config({ path: '.env.test' });
 const app = require('../../server');
 const { sequelize } = require('../../config/database');
 
