@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const { User } = require('../models');
 
 // Get user by ID
 exports.getUser = async (req, res) => {
@@ -49,7 +49,7 @@ exports.updateUser = async (req, res) => {
         const { id } = req.params;
         const { walletAddress } = req.body;
 
-        // Check if walletAddress is provided
+        // Validate walletAddress
         if (!walletAddress) {
             return res.status(400).json({ message: 'Wallet address is required' });
         }
@@ -60,6 +60,7 @@ exports.updateUser = async (req, res) => {
             return res.status(400).json({ message: 'Wallet address already in use' });
         }
 
+        // Check if user exists
         const user = await User.findByPk(id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });

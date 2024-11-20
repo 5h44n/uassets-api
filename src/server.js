@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+require('./models'); // This will execute the code in models/index.js
 const { connectDB } = require('./config/database');
 
 connectDB();
@@ -15,9 +16,11 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const quoteRoutes = require('./routes/quoteRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
+app.use('/api', quoteRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
