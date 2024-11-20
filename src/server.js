@@ -1,13 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/database');
+const { connectDB } = require('./config/database');
 
-// Initialize express app
-const app = express();
-
-// Connect to MongoDB
 connectDB();
+
+const app = express();
 
 // Middleware
 app.use(cors());
@@ -19,12 +17,7 @@ const authRoutes = require('./routes/authRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/protected', protectedRoutes);
-
-// Basic route
-app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to uAssets Trading API' });
-});
+app.use('/api', protectedRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -32,8 +25,11 @@ app.use((err, req, res, next) => {
     res.status(500).json({ message: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    console.log('Hot reloading enabled - watching for changes...');
-});
+  });
+}
+
+module.exports = app;

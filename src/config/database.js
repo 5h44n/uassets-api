@@ -2,9 +2,11 @@ require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const path = require('path');
 
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: path.join(__dirname, '../../data/database.sqlite'),
+    storage: isTestEnv ? ':memory:' : path.join(__dirname, '../../data/database.sqlite'),
     logging: false
 });
 

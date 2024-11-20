@@ -138,6 +138,7 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 .aider*
+/aider
 # SQLite database
 data/
 *.sqlite

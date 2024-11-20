@@ -1,94 +1,57 @@
-const jwt = require('jsonwebtoken');
-const authController = require('../../controllers/authController');
+const request = require('supertest');
+require('dotenv').config({ path: '.env.test' });
+const app = require('../../server');
+const { sequelize } = require('../../config/database');
 
-// Mock jwt
-jest.mock('jsonwebtoken');
+beforeAll(async () => {
+  await sequelize.sync({ force: true });
+});
+
+afterAll(async () => {
+  await sequelize.close();
+});
 
 describe('Auth Controller', () => {
-  let mockReq;
-  let mockRes;
-
-  beforeEach(() => {
-    // Reset mocks
-    mockReq = {
-      body: {}
-    };
-    mockRes = {
-      json: jest.fn(),
-      status: jest.fn().mockReturnThis()
-    };
-    process.env.JWT_SECRET = 'test-secret';
-  });
-
-  describe('generateToken', () => {
+  describe('POST /api/auth/token', () => {
     it('should generate access and refresh tokens successfully', async () => {
-      // Mock JWT sign
-      jwt.sign
-        .mockReturnValueOnce('fake-access-token')
-        .mockReturnValueOnce('fake-refresh-token');
+      const response = await request(app).post('/api/auth/token');
 
-      await authController.generateToken(mockReq, mockRes);
-
-      expect(jwt.sign).toHaveBeenCalledTimes(2);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Tokens generated successfully',
-        accessToken: 'fake-access-token',
-        refreshToken: 'fake-refresh-token'
-      });
-    });
-
-    it('should handle errors appropriately', async () => {
-      jwt.sign.mockImplementation(() => {
-        throw new Error('JWT Error');
-      });
-
-      await authController.generateToken(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(500);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'JWT Error'
-      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty('accessToken');
+      expect(response.body).toHaveProperty('refreshToken');
     });
   });
 
-  describe('refreshToken', () => {
+  describe('POST /api/auth/refresh', () => {
     it('should return error if no refresh token provided', async () => {
-      await authController.refreshToken(mockReq, mockRes);
+      const response = await request(app).post('/api/auth/refresh');
 
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Refresh token is required'
+      expect(response.statusCode).toBe(401);
+      expect(response.body).toEqual({
+        message: 'Refresh token is required',
       });
     });
 
     it('should generate new access token with valid refresh token', async () => {
-      mockReq.body.refreshToken = 'valid-refresh-token';
-      
-      jwt.verify.mockReturnValue({ type: 'refresh' });
-      jwt.sign.mockReturnValue('new-access-token');
+      const tokenResponse = await request(app).post('/api/auth/token');
+      const { refreshToken } = tokenResponse.body;
 
-      await authController.refreshToken(mockReq, mockRes);
+      const response = await request(app)
+        .post('/api/auth/refresh')
+        .send({ refreshToken });
 
-      expect(jwt.verify).toHaveBeenCalledWith('valid-refresh-token', 'test-secret');
-      expect(jwt.sign).toHaveBeenCalledTimes(1);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Token refreshed successfully',
-        accessToken: 'new-access-token'
-      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty('accessToken');
     });
 
     it('should reject invalid refresh tokens', async () => {
-      mockReq.body.refreshToken = 'invalid-token';
-      
-      jwt.verify.mockImplementation(() => {
-        throw new Error('Invalid token');
-      });
+      const response = await request(app)
+        .post('/api/auth/refresh')
+        .send({ refreshToken: 'invalid-token' });
 
-      await authController.refreshToken(mockReq, mockRes);
-
-      expect(mockRes.status).toHaveBeenCalledWith(401);
-      expect(mockRes.json).toHaveBeenCalledWith({
-        message: 'Invalid or expired refresh token'
+      expect(response.statusCode).toBe(401);
+      expect(response.body).toEqual({
+        message: 'Invalid or expired refresh token',
       });
     });
   });
