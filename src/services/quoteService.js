@@ -2,16 +2,11 @@ require('dotenv').config();
 const { ethers } = require('ethers');
 const { DutchOrderBuilder, NonceManager } = require('@uniswap/uniswapx-sdk');
 const { Quote } = require('../models');
-const { TOKEN_ADDRESSES, PAIR_TOKEN_ADDRESSES } = require('../config/tokenAddresses');
 const OrderQuoterABI = require('../abi/OrderQuoter.json');
 
+const PERMIT2_ADDRESS = process.env.PERMIT2_ADDRESS;
 const QUOTER_ADDRESS = process.env.QUOTER_ADDRESS;
 const RPC_URL = process.env.RPC_URL;
-
-// config.chains[8453] = {
-//   permit2: '0x000000000022D473030F116dDEE9F6B43aC78BA3',
-//   quoter: '0x88440407634f89873c5d9439987ac4be9725fea8',
-// };
 
 // Initialize provider and contracts
 const provider = new ethers.JsonRpcProvider(RPC_URL);
@@ -32,11 +27,15 @@ async function generateQuote({
     const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
 
     // Get nonce
-    const nonceMgr = new NonceManager(provider, chainId);
+    const nonceMgr = new NonceManager(provider, chainId, PERMIT2_ADDRESS);
     const nonce = await nonceMgr.useNonce(user.walletAddress);
 
     // Build order
-    const builder = new DutchOrderBuilder(chainId);
+    const builder = new DutchOrderBuilder(
+      chainId,
+      QUOTER_ADDRESS,
+      PERMIT2_ADDRESS,
+    );
     const order = builder
       .deadline(deadline)
       .decayEndTime(deadline)
