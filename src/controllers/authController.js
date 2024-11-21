@@ -1,6 +1,31 @@
 const jwt = require('jsonwebtoken');
 
+
+
 // Generate access token
+
+/**
+ * @swagger
+ * /token/generate:
+ *   post:
+ *     summary: Generate access and refresh tokens
+ *     description: Generates a new access token (valid for 15 minutes) and a refresh token (valid for 7 days).
+ *     tags:
+ *       - Token
+ *     responses:
+ *       200:
+ *         description: Tokens generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 exports.generateToken = async (req, res) => {
     try {
         // Generate access token
@@ -29,6 +54,46 @@ exports.generateToken = async (req, res) => {
 };
 
 // Refresh access token
+
+/**
+ * @swagger
+ * /token/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     description: Refreshes an expired access token using a valid refresh token.
+ *     tags:
+ *       - Token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: The refresh token
+ *                 example: eyJhbGciOiJIUzI1NiIsInR...
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefreshResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;

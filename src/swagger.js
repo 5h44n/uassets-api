@@ -13,13 +13,57 @@ const swaggerDefinition = {
       description: 'Development Server',
     },
   ],
+  components: {
+    schemas: {
+      TokenResponse: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Tokens generated successfully',
+          },
+          accessToken: {
+            type: 'string',
+            example: 'eyJhbGciOiJIUzI1NiIsInR...',
+          },
+          refreshToken: {
+            type: 'string',
+            example: 'eyJhbGciOiJIUzI1NiIsInR...',
+          },
+        },
+      },
+      RefreshResponse: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'Token refreshed successfully',
+          },
+          accessToken: {
+            type: 'string',
+            example: 'eyJhbGciOiJIUzI1NiIsInR...',
+          },
+        },
+      },
+      ErrorResponse: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            example: 'An error occurred',
+          },
+        },
+      },
+    },
+  },
 };
 
 const options = {
   swaggerDefinition,
-  apis: ['./routes/*.js', './src/controllers/*.js'],
+  apis: ['./routes/*.js', './src/controllers/*.js'], // Paths to files with Swagger annotations
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 module.exports = swaggerSpec;
+
