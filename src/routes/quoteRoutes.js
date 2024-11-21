@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const quoteController = require('../controllers/quoteController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateApi } = require('../middleware/authMiddleware');
 
-router.use(authenticateToken);
+router.use(authenticateApi);
 
 router.post('/quote', quoteController.createQuote);
 

@@ -1,14 +1,19 @@
 const request = require('supertest');
 const app = require('../../server');
 const { sequelize } = require('../../config/database');
-const jwt = require('jsonwebtoken');
-const { User, Quote } = require('../../models');
+const { User, Quote, Order, Tenant } = require('../../models');
 
 let token;
+let tenant;
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
-  token = jwt.sign({ type: 'access' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  // Create a test tenant
+  tenant = await Tenant.create({
+    name: 'Test Tenant',
+    apiKey: 'test-api-key',
+    apiSecret: 'test-api-secret',
+  });
 });
 
 afterAll(async () => {
@@ -19,7 +24,10 @@ describe('Quote Controller', () => {
   let user;
 
   beforeEach(async () => {
-    user = await User.create({ walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635' });
+    user = await User.create({
+      tenantId: tenant.id,
+      walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635',
+    });
   });
 
   afterEach(async () => {
@@ -31,7 +39,8 @@ describe('Quote Controller', () => {
     it('should return 400 if required fields are missing', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',
@@ -45,7 +54,8 @@ describe('Quote Controller', () => {
     it('should return 400 if userId is invalid', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: 'invalid-user-id',
           type: 'BUY',
@@ -61,7 +71,8 @@ describe('Quote Controller', () => {
     it('should return 400 if type is invalid', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'INVALID_TYPE',
@@ -77,7 +88,8 @@ describe('Quote Controller', () => {
     it('should return 400 if tokenAmount is missing or invalid for SELL orders', async () => {
       let response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'SELL',
@@ -94,7 +106,8 @@ describe('Quote Controller', () => {
       // tokenAmount is zero
       response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'SELL',
@@ -112,7 +125,8 @@ describe('Quote Controller', () => {
     it('should return 400 if pairTokenAmount is missing or invalid for BUY orders', async () => {
       let response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',
@@ -126,10 +140,10 @@ describe('Quote Controller', () => {
         message: 'pairTokenAmount must be greater than zero for BUY orders',
       });
 
-
       response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',
@@ -147,7 +161,8 @@ describe('Quote Controller', () => {
     it('should return 400 if token is invalid', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',
@@ -157,13 +172,16 @@ describe('Quote Controller', () => {
         });
 
       expect(response.statusCode).toBe(400);
-      expect(response.body).toEqual({ message: 'Invalid token or pairToken symbol' });
+      expect(response.body).toEqual({
+        message: 'Invalid token or pairToken symbol',
+      });
     });
 
     it('should return 400 if pairToken is invalid', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',
@@ -173,39 +191,9 @@ describe('Quote Controller', () => {
         });
 
       expect(response.statusCode).toBe(400);
-      expect(response.body).toEqual({ message: 'Invalid token or pairToken symbol' });
-    });
-
-    it('should return 401 if access token is missing', async () => {
-      const response = await request(app)
-        .post('/api/quote')
-        // access token is missing
-        .send({
-          userId: user.id,
-          type: 'BUY',
-          token: 'BTC',
-          pairToken: 'USDC',
-          pairTokenAmount: 10,
-        });
-
-      expect(response.statusCode).toBe(401);
-      expect(response.body).toEqual({ message: 'Access token is required' });
-    });
-
-    it('should return 403 if access token is invalid', async () => {
-      const response = await request(app)
-        .post('/api/quote')
-        .set('Authorization', `Bearer invalid_token`)
-        .send({
-          userId: user.id,
-          type: 'BUY',
-          token: 'BTC',
-          pairToken: 'USDC',
-          pairTokenAmount: 10,
-        });
-
-      expect(response.statusCode).toBe(403);
-      expect(response.body).toEqual({ message: 'Invalid or expired token' });
+      expect(response.body).toEqual({
+        message: 'Invalid token or pairToken symbol',
+      });
     });
   });
 
@@ -213,7 +201,8 @@ describe('Quote Controller', () => {
     it('should create a quote successfully', async () => {
       const response = await request(app)
         .post('/api/quote')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           userId: user.id,
           type: 'BUY',

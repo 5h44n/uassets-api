@@ -32,7 +32,8 @@ const { User } = require('../models');
 exports.getUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findByPk(id);
+    const tenantId = req.tenant.id;
+    const user = await User.findOne({ where: { id, tenantId } });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -42,6 +43,32 @@ exports.getUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+// Get all users
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     description: Retrieves a list of all users.
+ *     tags:
+ *       - User
+ *     responses:
+ *       200:
+ *         description: Users retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/UserResponse'
+ */
+
+exports.getUsers = async (req, res) => {
+  const tenant = req.tenant;
+  const users = await User.findAll({ where: { tenantId: tenant.id } });
+  res.json(users);
 };
 
 // Create a new user
@@ -89,8 +116,10 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: 'Wallet address already in use' });
     }
 
+    const tenantId = req.tenant.id;
+
     // Create new user
-    const user = await User.create({ walletAddress });
+    const user = await User.create({ walletAddress, tenantId });
 
     res.status(201).json({ message: 'User created successfully', user });
   } catch (error) {
@@ -142,6 +171,7 @@ exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { walletAddress } = req.body;
+    const tenantId = req.tenant.id;
 
     // Validate walletAddress
     if (!walletAddress) {
@@ -149,7 +179,9 @@ exports.updateUser = async (req, res) => {
     }
 
     // Check if the walletAddress already exists for another user
-    const existingUser = await User.findOne({ where: { walletAddress } });
+    const existingUser = await User.findOne({
+      where: { walletAddress, tenantId },
+    });
     if (existingUser && existingUser.id !== id) {
       return res.status(400).json({ message: 'Wallet address already in use' });
     }

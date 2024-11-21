@@ -1,35 +1,29 @@
 const { Model, DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
-const Quote = require('./Quote');
-const Order = require('./Order');
 
-class User extends Model {}
+class Tenant extends Model {}
 
-User.init(
+Tenant.init(
   {
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    tenantId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
-    walletAddress: {
+    apiKey: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
-      validate: {
-        notEmpty: true,
-      },
+    },
+    apiSecret: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   },
   {
     sequelize,
-    modelName: 'User',
+    modelName: 'Tenant',
     timestamps: true,
   }
 );
 
-module.exports = User;
+module.exports = Tenant;

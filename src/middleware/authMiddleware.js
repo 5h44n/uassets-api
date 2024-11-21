@@ -1,20 +1,23 @@
-const jwt = require('jsonwebtoken');
+const { Tenant } = require('../models');
 
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+const authenticateApi = async (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  const apiSecret = req.headers['x-api-secret'];
 
-  if (!token) {
-    return res.status(401).json({ message: 'Access token is required' });
+  if (!apiKey || !apiSecret) {
+    return res.status(401).json({ message: 'API Key and Secret are required' });
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
+  // Validate API Key and Secret
+  const tenant = await Tenant.findOne({ where: { apiKey, apiSecret } });
+  if (!tenant) {
+    return res.status(403).json({ message: 'Invalid API credentials' });
   }
+
+  // Attach tenant to request object
+  req.tenant = tenant;
+
+  next();
 };
 
-module.exports = { authenticateToken };
+module.exports = { authenticateApi };

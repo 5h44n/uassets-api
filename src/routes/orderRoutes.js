@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const { authenticateApi } = require('../middleware/authMiddleware');
 
-router.use(authenticateToken);
+router.use(authenticateApi);
 
 router.post('/order', orderController.createOrder);
 

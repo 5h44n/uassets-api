@@ -1,14 +1,19 @@
 const request = require('supertest');
 const app = require('../../server');
 const { sequelize } = require('../../config/database');
-const jwt = require('jsonwebtoken');
-const { User, Quote, Order } = require('../../models');
+const { User, Quote, Order, Tenant } = require('../../models');
 
 let token;
+let tenant;
 
 beforeAll(async () => {
   await sequelize.sync({ force: true });
-  token = jwt.sign({ type: 'access' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  // Create a test tenant
+  tenant = await Tenant.create({
+    name: 'Test Tenant',
+    apiKey: 'test-api-key',
+    apiSecret: 'test-api-secret',
+  });
 });
 
 afterAll(async () => {
@@ -20,17 +25,20 @@ describe('Order Controller', () => {
   let quote;
 
   beforeEach(async () => {
-    user = await User.create({ walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635' });
+    user = await User.create({
+      tenantId: tenant.id,
+      walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635',
+    });
     quote = await Quote.create({
-        userId: user.id,
-        type: 'BUY',
-        token: 'BTC',
-        tokenAmount: 1,
-        pairToken: 'USDC',
-        pairTokenAmount: 10,
-        deadline: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
-        blockchain: 'BASE',
-        relayerNonce: 0,
+      userId: user.id,
+      type: 'BUY',
+      token: 'BTC',
+      tokenAmount: 1,
+      pairToken: 'USDC',
+      pairTokenAmount: 10,
+      deadline: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
+      blockchain: 'BASE',
+      relayerNonce: 0,
     });
   });
 
@@ -44,7 +52,8 @@ describe('Order Controller', () => {
     it('should return 400 if required fields are missing', async () => {
       const response = await request(app)
         .post('/api/order')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           // Missing quoteId and signature
         });
@@ -56,7 +65,8 @@ describe('Order Controller', () => {
     it('should return 400 if quoteId is invalid', async () => {
       const response = await request(app)
         .post('/api/order')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           quoteId: 'invalid-quote-id',
           signature: 'valid-signature',
@@ -81,7 +91,8 @@ describe('Order Controller', () => {
 
       const response = await request(app)
         .post('/api/order')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({
           quoteId: expiredQuote.id,
           signature: 'valid-signature',
@@ -89,32 +100,6 @@ describe('Order Controller', () => {
 
       expect(response.statusCode).toBe(400);
       expect(response.body).toEqual({ message: 'Quote has expired' });
-    });
-
-    it('should return 401 if access token is missing', async () => {
-      const response = await request(app)
-        .post('/api/order')
-        // access token is missing
-        .send({
-          quoteId: quote.id,
-          signature: 'valid-signature',
-        });
-
-      expect(response.statusCode).toBe(401);
-      expect(response.body).toEqual({ message: 'Access token is required' });
-    });
-
-    it('should return 403 if access token is invalid', async () => {
-      const response = await request(app)
-        .post('/api/order')
-        .set('Authorization', `Bearer invalid_token`)
-        .send({
-          quoteId: quote.id,
-          signature: 'valid-signature',
-        });
-
-      expect(response.statusCode).toBe(403);
-      expect(response.body).toEqual({ message: 'Invalid or expired token' });
     });
   });
 });

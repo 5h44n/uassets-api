@@ -1,15 +1,21 @@
 require('dotenv').config();
 const request = require('supertest');
-const jwt = require('jsonwebtoken');
 const app = require('../../server');
 const { sequelize } = require('../../config/database');
-const User = require('../../models/User');
+const { User, Tenant } = require('../../models');
 
-let token;
+let tenant;
 
 beforeAll(async () => {
-  token = jwt.sign({ type: 'access' }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  // Sync database
   await sequelize.sync({ force: true });
+
+  // Create a test tenant
+  tenant = await Tenant.create({
+    name: 'Test Tenant',
+    apiKey: 'test-api-key',
+    apiSecret: 'test-api-secret',
+  });
 });
 
 afterAll(async () => {
@@ -17,12 +23,14 @@ afterAll(async () => {
 });
 
 describe('User Controller', () => {
-
   let userId;
 
   beforeEach(async () => {
-    // Create a user for testing
-    const user = await User.create({ walletAddress: '0x123' });
+    // Create a user for testing scoped to the test tenant
+    const user = await User.create({
+      tenantId: tenant.id,
+      walletAddress: '0x123',
+    });
     userId = user.id;
   });
 
@@ -35,7 +43,8 @@ describe('User Controller', () => {
     it('should create a new user successfully', async () => {
       const response = await request(app)
         .post('/api/users')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({ walletAddress: '0xABC' });
 
       expect(response.statusCode).toBe(201);
@@ -44,22 +53,23 @@ describe('User Controller', () => {
     });
 
     it('should not create a user with an existing wallet address', async () => {
-      // Assuming a user with walletAddress '0x123' already exists from beforeEach
-
       const response = await request(app)
         .post('/api/users')
-        .set('Authorization', `Bearer ${token}`)
-        .send({ walletAddress: '0x123' });
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
+        .send({ walletAddress: '0x123' }); // Already created in beforeEach
 
       expect(response.statusCode).toBe(400);
-      expect(response.body).toEqual({ message: 'Wallet address already in use' });
+      expect(response.body).toEqual({
+        message: 'Wallet address already in use',
+      });
     });
 
     it('should not create a user without a walletAddress', async () => {
       const response = await request(app)
         .post('/api/users')
-        .set('Authorization', `Bearer ${token}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({});
 
       expect(response.statusCode).toBe(400);
@@ -71,7 +81,8 @@ describe('User Controller', () => {
     it('should get the user successfully', async () => {
       const response = await request(app)
         .get(`/api/users/${userId}`)
-        .set('Authorization', `Bearer ${token}`);
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret);
 
       expect(response.statusCode).toBe(200);
       expect(response.body).toHaveProperty('id', userId);
@@ -81,7 +92,8 @@ describe('User Controller', () => {
     it('should return 404 for invalid user id', async () => {
       const response = await request(app)
         .get('/api/users/invalid-id')
-        .set('Authorization', `Bearer ${token}`);
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret);
 
       expect(response.statusCode).toBe(404);
       expect(response.body).toEqual({ message: 'User not found' });
@@ -92,7 +104,8 @@ describe('User Controller', () => {
     it('should update the user successfully', async () => {
       const response = await request(app)
         .put(`/api/users/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({ walletAddress: '0x456' });
 
       expect(response.statusCode).toBe(200);
@@ -102,7 +115,8 @@ describe('User Controller', () => {
     it('should return 404 when updating non-existent user', async () => {
       const response = await request(app)
         .put('/api/users/invalid-id')
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({ walletAddress: '0x789' });
 
       expect(response.statusCode).toBe(404);
@@ -110,22 +124,25 @@ describe('User Controller', () => {
     });
 
     it('should return 400 when updating to an existing wallet address', async () => {
-      // Create another user with a different wallet address
-      await User.create({ walletAddress: '0x789' });
+      await User.create({ walletAddress: '0x789', tenantId: tenant.id });
 
       const response = await request(app)
         .put(`/api/users/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({ walletAddress: '0x789' });
 
       expect(response.statusCode).toBe(400);
-      expect(response.body).toEqual({ message: 'Wallet address already in use' });
+      expect(response.body).toEqual({
+        message: 'Wallet address already in use',
+      });
     });
 
     it('should return 400 when walletAddress is not provided', async () => {
       const response = await request(app)
         .put(`/api/users/${userId}`)
-        .set('Authorization', `Bearer ${token}`)
+        .set('x-api-key', tenant.apiKey)
+        .set('x-api-secret', tenant.apiSecret)
         .send({});
 
       expect(response.statusCode).toBe(400);

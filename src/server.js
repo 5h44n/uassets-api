@@ -16,12 +16,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const quoteRoutes = require('./routes/quoteRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 
-app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', quoteRoutes);
 app.use('/api', orderRoutes);
