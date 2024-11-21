@@ -79,4 +79,4 @@ Order:
 ### Services
 
 - `quoteService` - 99% complete, getting an issue with signerOrProvider being invalid
-- `orderService` - Didn't have time to fully implement this, but would call the `ExecutiveDutchOrderReactor.execute()` with the serialized order and user signature and then return the transaction hash
+- `orderService` - Didn't have time to fully implement this, but would call the `ExecutiveDutchOrderReactor.execute()` smart contract function with the serialized order and user signature and then return the transaction hash
