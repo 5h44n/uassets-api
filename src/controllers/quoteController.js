@@ -56,8 +56,10 @@ exports.createQuote = async (req, res) => {
     }
 
     // Validate user exists
+    const tenantId = req.tenant.id;
     const user = await User.findByPk(userId);
-    if (!user) {
+
+    if (!user || user.tenantId !== tenantId) {
       return res.status(400).json({ message: 'Invalid userId' });
     }
 

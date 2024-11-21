@@ -3,7 +3,6 @@ const app = require('../../server');
 const { sequelize } = require('../../config/database');
 const { User, Quote, Order, Tenant } = require('../../models');
 
-let token;
 let tenant;
 
 beforeAll(async () => {
@@ -22,14 +21,13 @@ afterAll(async () => {
 
 describe('Order Controller', () => {
   let user;
-  let quote;
 
   beforeEach(async () => {
     user = await User.create({
       tenantId: tenant.id,
       walletAddress: '0xf0b0Db37E6e0015360093aE564F7745549d8E635',
     });
-    quote = await Quote.create({
+    await Quote.create({
       userId: user.id,
       type: 'BUY',
       token: 'BTC',

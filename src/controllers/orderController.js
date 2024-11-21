@@ -1,4 +1,4 @@
-const { Quote } = require('../models');
+const { Quote, User } = require('../models');
 const { executeOrder } = require('../services/orderService');
 
 /**
@@ -47,8 +47,17 @@ exports.createOrder = async (req, res) => {
 
   // Validate quote exists
   const quote = await Quote.findByPk(quoteId);
-
   if (!quote) {
+    return res.status(400).json({
+      message: 'Invalid quoteId',
+    });
+  }
+
+  // Validate quote belongs to tenant
+  const tenantId = req.tenant.id;
+  const user = await User.findByPk(quote.userId);
+
+  if (user.tenantId !== tenantId) {
     return res.status(400).json({
       message: 'Invalid quoteId',
     });
