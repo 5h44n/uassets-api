@@ -45,6 +45,56 @@ const swaggerDefinition = {
           },
         },
       },
+      UserResponse: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+            description: 'The unique identifier of the user',
+            example: '123e4567-e89b-12d3-a456-426614174000',
+          },
+          walletAddress: {
+            type: 'string',
+            description: "The user's wallet address",
+            example: '0xabc123...',
+          },
+          createdAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'The timestamp when the user was created',
+            example: '2024-11-20T10:00:00Z',
+          },
+          updatedAt: {
+            type: 'string',
+            format: 'date-time',
+            description: 'The timestamp when the user was last updated',
+            example: '2024-11-20T10:00:00Z',
+          },
+        },
+      },
+      CreateUserRequest: {
+        type: 'object',
+        required: ['walletAddress'],
+        properties: {
+          walletAddress: {
+            type: 'string',
+            description: 'The wallet address of the new user',
+            example: '0xabc123...',
+          },
+        },
+      },
+      UpdateUserRequest: {
+        type: 'object',
+        required: ['walletAddress'],
+        properties: {
+          walletAddress: {
+            type: 'string',
+            description: 'The new wallet address for the user',
+            example: '0xdef456...',
+          },
+        },
+      },
       CreateQuoteRequest: {
         type: 'object',
         required: ['userId', 'type', 'token', 'pairToken'],
