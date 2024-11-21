@@ -1,4 +1,8 @@
 async function executeOrder({ quote, signature }) {
-  // Rebuild order
-  // Call execute from reactor contract with serialized order and signature
+  console.log('Executing order:', quote, signature);
+  return true;
 }
+
+module.exports = {
+  executeOrder,
+};
