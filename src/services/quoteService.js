@@ -10,7 +10,11 @@ const RPC_URL = process.env.RPC_URL;
 
 // Initialize provider and contracts
 const provider = new ethers.JsonRpcProvider(RPC_URL);
-const orderQuoter = new ethers.Contract(QUOTER_ADDRESS, OrderQuoterABI, provider);
+const orderQuoter = new ethers.Contract(
+  QUOTER_ADDRESS,
+  OrderQuoterABI,
+  provider
+);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 async function generateQuote({
@@ -34,7 +38,7 @@ async function generateQuote({
     const builder = new DutchOrderBuilder(
       chainId,
       QUOTER_ADDRESS,
-      PERMIT2_ADDRESS,
+      PERMIT2_ADDRESS
     );
     const order = builder
       .deadline(deadline)
