@@ -1,6 +1,6 @@
 # Alongside Interview: uAssets Trading API
 
-Architect and implement a backend for a new exchange that uses Uniswap X as the settlement layer and uAssets as assets on exchange.
+REST API for trading uAssets on chain using UniswapX as the settlement layer
 
 ## Development
 
@@ -43,6 +43,7 @@ npm run test
 ### Stack
 
 ExpressJS + SQLite + Swagger (docs)
+
 CI: Pre-commit hooks with Prettier and ESLint via Husky
 
 ### Models
