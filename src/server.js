@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 require('./models'); // This will execute the code in models/index.js
 const { connectDB } = require('./config/database');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 connectDB();
 
@@ -23,6 +25,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', quoteRoutes);
 app.use('/api', orderRoutes);
+
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {

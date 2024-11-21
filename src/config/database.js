@@ -14,7 +14,6 @@ const connectDB = async () => {
     try {
         await sequelize.authenticate();
         await sequelize.sync();
-        console.log('SQLite Database Connected');
     } catch (error) {
         console.error(`Error: ${error.message}`);
         process.exit(1);
