@@ -93,6 +93,41 @@ async function generateQuote({
   }
 }
 
+async function serializeQuote(quote) {
+  // use order builder steps above to serialize the quote
+  const chainId = 8453; // BASE chain
+  const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+
+  const nonceMgr = new NonceManager(provider, chainId, PERMIT2_ADDRESS);
+  const nonce = await nonceMgr.useNonce(quote.user.walletAddress);
+
+  const builder = new DutchOrderBuilder(
+    chainId,
+    QUOTER_ADDRESS,
+    PERMIT2_ADDRESS
+  );
+
+  const order = builder
+    .deadline(deadline)
+    .decayEndTime(deadline)
+    .decayStartTime(deadline - 100)
+    .nonce(nonce)
+    .input({
+      token: quote.type == 'BUY' ? quote.pairToken : quote.token,
+      amount: quote.type == 'BUY' ? quote.pairTokenAmount : quote.tokenAmount,
+    })
+    .output({
+      token: quote.token,
+      startAmount: ethers.parseUnits('0', 18),
+      endAmount: ethers.parseUnits('100000000000', 18), // estimate with a wide range until we incorporate slippage
+      recipient: quote.user.walletAddress,
+    })
+    .build();
+
+  return order.serialize();
+}
+
 module.exports = {
   generateQuote,
+  serializeQuote,
 };

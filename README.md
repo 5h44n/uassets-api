@@ -16,6 +16,14 @@ npm install
 mkdir data/ && touch data/database.sqlite
 ```
 
+### Copy .env file and set values
+
+See Universal Protocol [docs](https://docs.universalassets.xyz/universal-protocol/developers/contract-addresses) for contract address
+
+```bash
+cp .env.example .env
+```
+
 ### Start server
 
 ```bash
