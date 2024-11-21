@@ -45,6 +45,94 @@ const swaggerDefinition = {
           },
         },
       },
+      CreateQuoteRequest: {
+        type: 'object',
+        required: ['userId', 'type', 'token', 'pairToken'],
+        properties: {
+          userId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'The ID of the user creating the quote',
+            example: '123e4567-e89b-12d3-a456-426614174000',
+          },
+          type: {
+            type: 'string',
+            enum: ['BUY', 'SELL'],
+            description: 'The type of quote (BUY or SELL)',
+            example: 'BUY',
+          },
+          token: {
+            type: 'string',
+            description: 'The token symbol for the quote',
+            example: 'ETH',
+          },
+          tokenAmount: {
+            type: 'number',
+            description:
+              'The amount of the token for the quote (required for SELL)',
+            example: 1.5,
+          },
+          pairToken: {
+            type: 'string',
+            description: 'The pair token symbol for the quote',
+            example: 'USDC',
+          },
+          pairTokenAmount: {
+            type: 'number',
+            description:
+              'The amount of the pair token for the quote (required for BUY)',
+            example: 3000,
+          },
+        },
+      },
+      QuoteResponse: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            format: 'uuid',
+            description: 'The unique identifier of the quote',
+            example: '123e4567-e89b-12d3-a456-426614174001',
+          },
+          userId: {
+            type: 'string',
+            format: 'uuid',
+            description: 'The ID of the user who created the quote',
+            example: '123e4567-e89b-12d3-a456-426614174000',
+          },
+          type: {
+            type: 'string',
+            enum: ['BUY', 'SELL'],
+            description: 'The type of quote',
+            example: 'BUY',
+          },
+          token: {
+            type: 'string',
+            description: 'The token symbol',
+            example: 'ETH',
+          },
+          tokenAmount: {
+            type: 'number',
+            description: 'The amount of the token',
+            example: 1.5,
+          },
+          pairToken: {
+            type: 'string',
+            description: 'The pair token symbol',
+            example: 'USDC',
+          },
+          pairTokenAmount: {
+            type: 'number',
+            description: 'The amount of the pair token',
+            example: 3000,
+          },
+          relayerNonce: {
+            type: 'number',
+            description: 'A unique nonce to track quotes',
+            example: 42,
+          },
+        },
+      },
       CreateOrderRequest: {
         type: 'object',
         required: ['quoteId', 'signature'],
