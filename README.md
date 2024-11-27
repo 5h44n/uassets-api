@@ -1,4 +1,4 @@
-# Alongside Interview: uAssets Trading API
+# uAssets Trading API
 
 REST API for trading uAssets on chain using UniswapX as the settlement layer
 
